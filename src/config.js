@@ -1,30 +1,19 @@
 /**
- * Backend-Konfiguration – die einzige Datei, die du für den Online-Betrieb
- * anpassen musst.
+ * Backend-Konfiguration.
  *
- * LEER LASSEN  -> Demo-Modus: alle Daten liegen nur im localStorage dieses
- *                 Browsers. Gut zum Ausprobieren, aber Teilnehmer sehen sich
- *                 gegenseitig NICHT.
+ * Hier ist Supabase aktiv – die App speichert in der echten Datenbank,
+ * Teilnehmer sehen sich also gegenseitig.
  *
- * AUSFÜLLEN     -> echte Datenbank über Supabase. Sobald beide Werte gesetzt
- *                 sind, schaltet die App automatisch um.
+ * Der Publishable Key ist öffentlich gedacht und darf im Repo stehen:
+ * alles, was damit möglich ist, begrenzen die Regeln in supabase/schema.sql.
+ * NIEMALS den Secret-Key (`sb_secret_…` / `service_role`) hier eintragen.
  *
- * Schritt-für-Schritt-Anleitung inkl. Fehlersuche: ../SETUP.md
- * Vorlage mit Beispielwerten: ../supabase/config.example.js
- *
- * Der `anon` / `public` Key ist öffentlich und darf im Repo stehen – der
- * Schutz kommt aus den RLS-Regeln in supabase/schema.sql. Den `service_role`
- * Key niemals hier eintragen.
+ * Anleitung inkl. Fehlersuche: ../SETUP.md
+ * Vorlage: ../supabase/config.example.js
  */
 export const config = {
   supabase: {
-    // Project Settings -> Data API -> Project URL
-    // z. B. 'https://abcdefghijklmnop.supabase.co'
-    url: '',
-
-    // Project Settings -> API Keys
-    //  neues System:     "Publishable key" -> beginnt mit "sb_publishable_"
-    //  älteres System:   "anon" / "public" -> beginnt mit "eyJhbGciOi"
-    anonKey: ''
+    url: 'https://leprhzdisuycbrwonxkg.supabase.co',
+    anonKey: 'sb_publishable_WZ6mfAR7CIZeUqqC68kVpQ_fs_SIBor'
   }
 };
