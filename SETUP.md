@@ -51,15 +51,16 @@ Erwartet: `180 days`, `0`, eine Zeile `expires_at`. Keine Fehlermeldung.
 
 ## 3. Werte kopieren
 
-**Project Settings → API**:
+**Project Settings → Data API** (bei älteren Dashboards: *Project Settings → API*):
 
 | Feld | Wohin | Aussehen |
 | --- | --- | --- |
 | **Project URL** | `url` | `https://abcdefghijklmnop.supabase.co` |
-| **anon** / **public** (unter *Project API keys*) | `anonKey` | beginnt mit `eyJhbGciOi…` |
+| **Publishable key** (neues System) bzw. **anon / public** (älteres System) | `anonKey` | `sb_publishable_…` bzw. `eyJhbGciOi…` |
 
-> ⚠️ **Nicht** den `service_role` Key nehmen. Der umgeht jede Zugriffsprüfung und darf niemals
-> in den Browser. Wenn du ihn versehentlich veröffentlicht hast: im Dashboard **rotieren**.
+> ⚠️ **Nicht** den Secret-Key nehmen — weder `sb_secret_…` (neues System) noch `service_role`
+> (älteres System). Der umgeht jede Zugriffsprüfung und darf niemals in den Browser.
+> Wenn du ihn versehentlich veröffentlicht hast: im Dashboard **rotieren**.
 
 ---
 
@@ -71,7 +72,7 @@ Datei öffnen und beide Werte einsetzen (Vorlage: [`supabase/config.example.js`]
 export const config = {
   supabase: {
     url: 'https://abcdefghijklmnop.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…'
+    anonKey: 'sb_publishable_…'   // oder 'eyJhbGciOi…' beim älteren Key-System
   }
 };
 ```

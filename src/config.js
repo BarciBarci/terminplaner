@@ -18,10 +18,13 @@
  */
 export const config = {
   supabase: {
+    // Project Settings -> Data API -> Project URL
     // z. B. 'https://abcdefghijklmnop.supabase.co'
     url: '',
 
-    // Project Settings -> API -> Project API keys -> "anon" / "public"
+    // Project Settings -> API Keys
+    //  neues System:     "Publishable key" -> beginnt mit "sb_publishable_"
+    //  älteres System:   "anon" / "public" -> beginnt mit "eyJhbGciOi"
     anonKey: ''
   }
 };
