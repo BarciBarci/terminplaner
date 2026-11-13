@@ -573,7 +573,15 @@ async function renderParticipant(participantToken) {
             paint();
             toast('Gespeichert.');
           },
-          failed: (error) => toast(errorText(error))
+          failed: (error) => toast(errorText(error)),
+          reload: async () => {
+            try {
+              data = await store.participantLoad(participantToken);
+              paint();
+            } catch (error) {
+              toast(errorText(error));
+            }
+          }
         }))
       : [h('p', { class: 'muted' }, 'Für dieses Event sind noch keine Tage festgelegt.')];
 
@@ -605,20 +613,56 @@ async function renderParticipant(participantToken) {
 }
 
 function availabilityCard(participantToken, data, day, axis, callbacks) {
-  const mine = data.availability
+  // Eigener, veränderlicher Stand dieser Karte. Wird bei jedem Klick sofort
+  // aktualisiert, damit schnelle Klicks auf mehrere Stunden nicht verloren gehen.
+  let mine = data.availability
     .filter((entry) => entry.participant_id === data.me.id && entry.day_id === day.id)
     .sort((a, b) => toMin(a.start) - toMin(b.start));
 
-  const persist = async (ranges) => {
+  // Schreibvorgänge hintereinander ausführen: jede Anfrage schickt den kompletten
+  // Tag, parallele Anfragen würden sich sonst gegenseitig überschreiben.
+  let queue = Promise.resolve();
+
+  const badgeBox = h('span', { class: 'badge-box' });
+  const timelineBox = h('div', { class: 'timeline' });
+  const timesBox = h('p', { class: 'tl-times' });
+
+  function paintLocal() {
+    if (mine.length) {
+      badgeBox.replaceChildren(
+        h('span', { class: 'badge badge-ok' }, mine.length === 1 ? '1 Zeitraum' : `${mine.length} Zeiträume`)
+      );
+    } else {
+      badgeBox.replaceChildren();
+    }
+
+    timelineBox.replaceChildren(
+      timelineTrack(day, mine, { axis, onRemove: removeRange, onToggleHour: toggleHour }),
+      timeAxis(axis)
+    );
+
+    timesBox.replaceChildren(
+      ...(mine.length
+        ? mine.map((range) => h('span', { class: 'tl-time' }, `${range.start} – ${range.end}`))
+        : [h('span', { class: 'muted' }, 'Noch keine Angabe')])
+    );
+  }
+
+  async function flush() {
     try {
-      const next = await store.setAvailability(participantToken, day.id, mergeRanges(ranges));
+      const next = await store.setAvailability(participantToken, day.id, mine);
       callbacks.saved(next);
     } catch (error) {
       callbacks.failed(error);
-      return false;
+      if (callbacks.reload) callbacks.reload();
     }
-    return true;
-  };
+  }
+
+  function commit(nextRanges) {
+    mine = mergeRanges(nextRanges);
+    paintLocal();
+    queue = queue.then(flush, flush);
+  }
 
   const startInput = h('input', {
     type: 'time',
@@ -653,15 +697,15 @@ function availabilityCard(participantToken, data, day, axis, callbacks) {
       return;
     }
 
-    addButton.disabled = true;
-    await persist([...mine, { start, end }]);
-    addButton.disabled = false;
+    commit([...mine, { start, end }]);
   });
 
-  const removeRange = (range) => persist(mine.filter((entry) => entry !== range));
+  function removeRange(range) {
+    commit(mine.filter((entry) => entry !== range));
+  }
 
   // Ganze Stunde zusagen bzw. wieder abwählen.
-  const toggleHour = (from, to) => {
+  function toggleHour(from, to) {
     const startMin = toMin(from);
     const endMin = toMin(to);
     const covered = mine.some(
@@ -669,7 +713,7 @@ function availabilityCard(participantToken, data, day, axis, callbacks) {
     );
 
     if (!covered) {
-      persist([...mine, { start: from, end: to }]);
+      commit([...mine, { start: from, end: to }]);
       return;
     }
 
@@ -685,8 +729,10 @@ function availabilityCard(participantToken, data, day, axis, callbacks) {
       if (rangeStart < startMin) next.push({ start: range.start, end: from });
       if (rangeEnd > endMin) next.push({ start: to, end: range.end });
     }
-    persist(next);
+    commit(next);
   };
+
+  paintLocal();
 
   return h(
     'article',
@@ -700,18 +746,10 @@ function availabilityCard(participantToken, data, day, axis, callbacks) {
         h('div', { class: 'day-title' }, formatDay(day.date)),
         h('div', { class: 'muted small' }, `Event-Zeit: ${day.start} – ${day.end}`)
       ),
-      mine.length
-        ? h('span', { class: 'badge badge-ok' }, mine.length === 1 ? '1 Zeitraum' : `${mine.length} Zeiträume`)
-        : null
+      badgeBox
     ),
-    availabilityTimeline(day, mine, axis, { onRemove: removeRange, onToggleHour: toggleHour }),
-    h(
-      'p',
-      { class: 'tl-times' },
-      mine.length
-        ? mine.map((range) => h('span', { class: 'tl-time' }, `${range.start} – ${range.end}`))
-        : h('span', { class: 'muted' }, 'Noch keine Angabe')
-    ),
+    timelineBox,
+    timesBox,
     h('div', { class: 'add-row' }, startInput, h('span', { class: 'dash' }, '–'), endInput, addButton),
     h(
       'p',
@@ -837,16 +875,6 @@ function timelineTrack(day, ranges, options = {}) {
   }
 
   return h('div', { class: `tl-track${compact ? ' tl-compact' : ''}` }, ...children);
-}
-
-/** Eigene Zeiträume eines Tages als bearbeitbare Zeitachse. */
-function availabilityTimeline(day, ranges, axis, handlers) {
-  return h(
-    'div',
-    { class: 'timeline' },
-    timelineTrack(day, ranges, { axis, ...handlers }),
-    timeAxis(axis)
-  );
 }
 
 /* ------------------------------------------------------------------ */

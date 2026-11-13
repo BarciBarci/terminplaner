@@ -395,6 +395,11 @@ a:focus-visible {
   white-space: nowrap;
 }
 
+.badge-box {
+  display: flex;
+  gap: 6px;
+}
+
 .badge-admin {
   background: var(--accent-soft);
   color: var(--accent);
