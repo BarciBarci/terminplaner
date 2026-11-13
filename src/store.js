@@ -400,15 +400,35 @@ const KNOWN_CODES = [
   'invalid_name',
   'invalid_days',
   'invalid_range',
-  'duplicate_name'
+  'duplicate_name',
+  'expired'
 ];
 
+const PLACEHOLDER = /DEIN-PROJEKT|EXAMPLE|your-project|XXXX/i;
+
+/** Prüft und normalisiert die Supabase-Angaben aus src/config.js. */
+function endpoint() {
+  const url = String(config.supabase?.url ?? '').trim();
+  const key = String(config.supabase?.anonKey ?? '').trim();
+
+  if (!url || !key || PLACEHOLDER.test(url) || PLACEHOLDER.test(key)) {
+    throw new AppError('config_invalid');
+  }
+  if (!/^https:\/\/[^\s/]+/i.test(url)) {
+    throw new AppError('config_invalid');
+  }
+
+  // "…/rest/v1" oder ein abschließender Slash sind häufige Kopierfehler.
+  return { base: url.replace(/\/+$/, '').replace(/\/rest\/v1$/, ''), key };
+}
+
 async function rpc(fn, args) {
-  const base = config.supabase.url.replace(/\/+$/, '');
+  const { base, key } = endpoint();
+
   const headers = {
     'Content-Type': 'application/json',
-    apikey: config.supabase.anonKey,
-    Authorization: `Bearer ${config.supabase.anonKey}`
+    apikey: key,
+    Authorization: `Bearer ${key}`
   };
 
   let response;
@@ -423,20 +443,35 @@ async function rpc(fn, args) {
   }
 
   const text = await response.text();
+  if (response.ok) return text ? JSON.parse(text) : null;
 
-  if (!response.ok) {
-    let raw = text;
-    try {
-      const parsed = JSON.parse(text);
-      raw = parsed.message || parsed.hint || parsed.details || text;
-    } catch {
-      /* Text war kein JSON */
-    }
-    const code = KNOWN_CODES.find((candidate) => String(raw).includes(candidate)) || 'unknown';
-    throw new AppError(code, raw);
+  let raw = text;
+  let parsed = null;
+  try {
+    parsed = JSON.parse(text);
+    raw = parsed.message || parsed.hint || parsed.details || text;
+  } catch {
+    /* Text war kein JSON */
   }
 
-  return text ? JSON.parse(text) : null;
+  const known = KNOWN_CODES.find((candidate) => String(raw).includes(candidate));
+  if (known) throw new AppError(known, raw);
+
+  // Schema noch nicht eingespielt oder Ausführungsrechte fehlen.
+  if (
+    parsed?.code === 'PGRST202' ||
+    parsed?.code === '42501' ||
+    response.status === 404 ||
+    /could not find the function|permission denied|does not exist/i.test(String(raw))
+  ) {
+    throw new AppError('schema_missing', raw);
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    throw new AppError('config_invalid', raw);
+  }
+
+  throw new AppError('unknown', raw);
 }
 
 const remote = {

@@ -74,6 +74,11 @@ Nach ein bis zwei Minuten ist die Seite unter
 
 Ohne diesen Schritt funktioniert nur der Demo-Modus.
 
+> Die ausführliche Checkliste mit Prüfschritten, Fehlersuche und Hinweisen zur Frist steht in
+> **[SETUP.md](SETUP.md)**. Vorlage für die Werte: [`supabase/config.example.js`](supabase/config.example.js).
+
+Kurzfassung:
+
 1. Auf [supabase.com](https://supabase.com) ein kostenloses Projekt anlegen.
 2. Im Projekt **SQL Editor** öffnen und den kompletten Inhalt von
    [`supabase/schema.sql`](supabase/schema.sql) einfügen und ausführen.
@@ -172,6 +177,8 @@ src/util.js             Zeit-/Datums-Helfer, Zeitraum-Merging, Abschnittszählun
 src/dom.js              Mini-DOM-Helfer (h())
 src/styles.css          Styles (hell + dunkel via prefers-color-scheme)
 supabase/schema.sql     Tabellen, RLS, RPC-Funktionen
+supabase/config.example.js  Vorlage für die Zugangsdaten
+SETUP.md                Schritt-für-Schritt-Einrichtung von Supabase
 tests/store.test.mjs    Smoke-Test ohne Browser: node tests/store.test.mjs
 ```
 

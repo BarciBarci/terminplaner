@@ -13,6 +13,10 @@ const ERROR_TEXT = {
   invalid_range: 'Der Zeitraum muss innerhalb der Event-Zeit liegen und der Beginn vor dem Ende.',
   duplicate_name: 'Diesen Namen gibt es bei diesem Event schon.',
   expired: 'Dieses Event ist abgelaufen und wurde automatisch gelöscht (Aufbewahrung: 180 Tage).',
+  schema_missing:
+    'Die Datenbank ist noch nicht eingerichtet: Bitte supabase/schema.sql im Supabase SQL Editor ausführen (siehe SETUP.md).',
+  config_invalid:
+    'Die Supabase-Angaben in src/config.js fehlen oder sehen falsch aus (siehe SETUP.md).',
   network_error: 'Keine Verbindung zum Server. Bitte später erneut versuchen.',
   unknown: 'Da ist etwas schiefgelaufen.'
 };
@@ -972,7 +976,7 @@ if (banner) {
   if (backendName === 'local') {
     banner.hidden = false;
     banner.textContent =
-      'Demo-Modus: Daten werden nur in diesem Browser gespeichert. Für echtes Teilen Supabase in src/config.js eintragen (siehe README).';
+      'Demo-Modus: Daten werden nur in diesem Browser gespeichert. Für echtes Teilen Supabase in src/config.js eintragen – Anleitung in SETUP.md.';
   }
 }
 
