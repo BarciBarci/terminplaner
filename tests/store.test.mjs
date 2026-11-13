@@ -10,8 +10,18 @@ globalThis.localStorage = {
   removeItem: (key) => memory.delete(key)
 };
 
+// Diese Tests prüfen ausschließlich das lokale Backend. Ohne diese Zeile
+// würden sie bei gefüllter src/config.js gegen die echte Datenbank laufen und
+// dort Daten anlegen.
+globalThis.__TERMINPLANER_BACKEND__ = 'local';
+
 const store = await import('../src/store.js');
-const { mergeRanges, segmentCounts } = await import('../src/util.js');
+const { mergeRanges, segmentCounts, toggleHourRange } = await import('../src/util.js');
+
+if (store.backendName !== 'local') {
+  console.error(`ABBRUCH: Tests laufen nur gegen das lokale Backend (aktiv: ${store.backendName}).`);
+  process.exit(1);
+}
 
 let failures = 0;
 const ok = (condition, label) => {
@@ -257,6 +267,36 @@ ok(
 const weg = await store.createEvent({ name: 'Weg damit', days });
 await store.adminDeleteEvent(weg.admin_token);
 await expectCode(store.adminLoad(weg.admin_token), 'invalid_token', 'geloeschtes Event ist weg');
+
+console.log('\nStunden umschalten');
+let block = [];
+block = toggleHourRange(block, '10:00', '11:00');
+block = toggleHourRange(block, '11:00', '12:00');
+ok(
+  block.length === 1 && block[0].start === '10:00' && block[0].end === '12:00',
+  'zwei Stunden nacheinander ergeben einen Block'
+);
+
+block = toggleHourRange(block, '11:00', '12:00');
+ok(block.length === 1 && block[0].start === '10:00' && block[0].end === '11:00', 'Stunde am Blockende abwählen');
+
+block = toggleHourRange(block, '10:00', '11:00');
+ok(block.length === 0, 'letzte Stunde abwählen ergibt leer');
+
+// Regressionstest für den gefundenen Bug: schnelle Klicks lasen denselben
+// alten Stand und der zweite Schreibvorgang überschrieb den ersten.
+const vorher = [{ start: '12:00', end: '13:00' }];
+const nachZweiKlicks = toggleHourRange(
+  toggleHourRange(vorher, '10:00', '11:00'),
+  '11:00',
+  '12:00'
+);
+ok(
+  nachZweiKlicks.length === 1 &&
+    nachZweiKlicks[0].start === '10:00' &&
+    nachZweiKlicks[0].end === '13:00',
+  'nacheinander geklickte Stunden bleiben erhalten'
+);
 
 console.log(failures === 0 ? '\nALLE TESTS BESTANDEN\n' : `\n${failures} TEST(S) FEHLGESCHLAGEN\n`);
 process.exit(failures === 0 ? 0 : 1);

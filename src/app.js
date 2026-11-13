@@ -2,7 +2,7 @@ import { h } from './dom.js';
 import * as store from './store.js';
 import { backendName } from './store.js';
 import * as registry from './registry.js';
-import { formatDate, formatDay, fromMin, mergeRanges, segmentCounts, toMin, todayISO } from './util.js';
+import { formatDate, formatDay, fromMin, mergeRanges, segmentCounts, toMin, todayISO, toggleHourRange } from './util.js';
 
 const root = document.getElementById('app');
 
@@ -706,30 +706,7 @@ function availabilityCard(participantToken, data, day, axis, callbacks) {
 
   // Ganze Stunde zusagen bzw. wieder abwählen.
   function toggleHour(from, to) {
-    const startMin = toMin(from);
-    const endMin = toMin(to);
-    const covered = mine.some(
-      (range) => toMin(range.start) <= startMin && toMin(range.end) >= endMin
-    );
-
-    if (!covered) {
-      commit([...mine, { start: from, end: to }]);
-      return;
-    }
-
-    const next = [];
-    for (const range of mine) {
-      const rangeStart = toMin(range.start);
-      const rangeEnd = toMin(range.end);
-
-      if (rangeEnd <= startMin || rangeStart >= endMin) {
-        next.push(range);
-        continue;
-      }
-      if (rangeStart < startMin) next.push({ start: range.start, end: from });
-      if (rangeEnd > endMin) next.push({ start: to, end: range.end });
-    }
-    commit(next);
+    commit(toggleHourRange(mine, from, to));
   };
 
   paintLocal();

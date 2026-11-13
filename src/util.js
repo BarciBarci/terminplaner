@@ -87,6 +87,36 @@ export function mergeRanges(ranges) {
 export const secondsOfDay = (value) => toMin(value) * 60;
 
 /**
+ * Schaltet eine ganze Stunde in einer Zeitraumliste um: ist sie vollständig
+ * abgedeckt, wird sie herausgeschnitten, sonst ergänzt. Ergebnis ist immer
+ * zusammengefasst und sortiert.
+ */
+export function toggleHourRange(ranges, from, to) {
+  const startMin = toMin(from);
+  const endMin = toMin(to);
+  const covered = ranges.some(
+    (range) => toMin(range.start) <= startMin && toMin(range.end) >= endMin
+  );
+
+  if (!covered) return mergeRanges([...ranges, { start: from, end: to }]);
+
+  const next = [];
+  for (const range of ranges) {
+    const rangeStart = toMin(range.start);
+    const rangeEnd = toMin(range.end);
+
+    if (rangeEnd <= startMin || rangeStart >= endMin) {
+      next.push(range);
+      continue;
+    }
+    if (rangeStart < startMin) next.push({ start: range.start, end: from });
+    if (rangeEnd > endMin) next.push({ start: to, end: range.end });
+  }
+
+  return mergeRanges(next);
+}
+
+/**
  * Zerlegt das Zeitfenster eines Tages an allen Grenzen der eingetragenen
  * Zeiträume und zählt für jeden Abschnitt, wie viele Personen ihn komplett
  * abdecken. Benachbarte Abschnitte mit gleicher Anzahl werden verschmolzen.

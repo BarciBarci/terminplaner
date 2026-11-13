@@ -12,7 +12,14 @@
 import { config } from './config.js';
 import { isValidISODate, isValidTime, normTime, toMin } from './util.js';
 
-const REMOTE = Boolean(config.supabase?.url && config.supabase?.anonKey);
+// Testsuite kann das Backend erzwingen, damit sie nie versehentlich gegen
+// eine echte Datenbank schreibt (globalThis.__TERMINPLANER_BACKEND__).
+const forcedBackend =
+  typeof globalThis !== 'undefined' ? globalThis.__TERMINPLANER_BACKEND__ : undefined;
+
+const REMOTE = forcedBackend
+  ? forcedBackend === 'supabase'
+  : Boolean(config.supabase?.url && config.supabase?.anonKey);
 
 export const backendName = REMOTE ? 'supabase' : 'local';
 
