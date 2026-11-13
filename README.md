@@ -22,6 +22,11 @@ Minimale Web-App zum gemeinsamen Terminfinden.
 
 Läuft als reine Static-Site auf GitHub Pages – ohne Build-Schritt, ohne Framework.
 
+**Live:** <https://barcibarci.github.io/terminplaner/>
+
+> Aktuell läuft die gehostete Version noch im **Demo-Modus** (Supabase-Zugang fehlt noch in
+> `src/config.js`). Teilnehmer sehen sich dort erst gegenseitig, sobald Schritt 3 erledigt ist.
+
 ---
 
 ## 1. Lokal ausprobieren
@@ -40,6 +45,11 @@ verschiedene Personen sehen sich gegenseitig **nicht**. Oben erscheint ein entsp
 ---
 
 ## 2. Auf GitHub Pages veröffentlichen
+
+Das Repo existiert bereits: <https://github.com/BarciBarci/terminplaner> – Pages ist aktiv,
+Quelle `main`, Ordner `/ (root)`. Ein `git push` genügt, die Seite baut sich automatisch neu.
+
+Für ein neues Repository von Grund auf:
 
 ```bash
 git init
